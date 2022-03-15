@@ -115,7 +115,7 @@ esac
 case $dnsdomainNum in
 
   1)
-    if [[ `curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/53f938847778f7ef2e0ae6dc5857c1a4/dns_records?type=A&proxied=false&page=1&per_page=100&order=type&direction=desc&match=any' -H 'X-Auth-Email: dev.hinahon60@gmail.com' -H 'X-Auth-Key: 17dc17ceba5d6e7fe3587c55a40521a217e81' -H 'Content-Type: application/json' | jq -r '.result_info.total_count'` == "200" ]]
+    if [[ `curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/53f938847778f7ef2e0ae6dc5857c1a4/dns_records?type=A&proxied=false&page=1&per_page=100&order=type&direction=desc&match=any' -H 'X-Auth-Email: dev.hinahon60@gmail.com' -H 'X-Auth-Key: 8f49c59f3166bf4b53b9d73f4dd44eb96b5ea' -H 'Content-Type: application/json' | jq -r '.result_info.total_count'` == "200" ]]
     then
         echo "Dns records on this domain is full!"
         exit 1
@@ -126,7 +126,7 @@ case $dnsdomainNum in
     ;;
 
   2)
-    if [[ `curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/ac7d3146edcd4ef18d3cb36b29a821c0/dns_records?type=A&proxied=false&page=1&per_page=100&order=type&direction=desc&match=any' -H 'X-Auth-Email: dev.hinahon60@gmail.com' -H 'X-Auth-Key: 17dc17ceba5d6e7fe3587c55a40521a217e81' -H 'Content-Type: application/json' | jq -r '.result_info.total_count'` == "200" ]]
+    if [[ `curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/ac7d3146edcd4ef18d3cb36b29a821c0/dns_records?type=A&proxied=false&page=1&per_page=100&order=type&direction=desc&match=any' -H 'X-Auth-Email: dev.hinahon60@gmail.com' -H 'X-Auth-Key: 8f49c59f3166bf4b53b9d73f4dd44eb96b5ea' -H 'Content-Type: application/json' | jq -r '.result_info.total_count'` == "200" ]]
     then
         echo "Dns records on this domain is full!"
         exit 1
@@ -136,7 +136,7 @@ case $dnsdomainNum in
     fi
     ;;
   3)
-    if [[ `curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/4f0422701701f181e8cc9f1d36b67b6f/dns_records?type=A&proxied=false&page=1&per_page=100&order=type&direction=desc&match=any' -H 'X-Auth-Email: dev.hinahon60@gmail.com' -H 'X-Auth-Key: 17dc17ceba5d6e7fe3587c55a40521a217e81' -H 'Content-Type: application/json' | jq -r '.result_info.total_count'` == "200" ]]
+    if [[ `curl -s -X GET 'https://api.cloudflare.com/client/v4/zones/4f0422701701f181e8cc9f1d36b67b6f/dns_records?type=A&proxied=false&page=1&per_page=100&order=type&direction=desc&match=any' -H 'X-Auth-Email: dev.hinahon60@gmail.com' -H 'X-Auth-Key: 8f49c59f3166bf4b53b9d73f4dd44eb96b5ea' -H 'Content-Type: application/json' | jq -r '.result_info.total_count'` == "200" ]]
     then
         echo "Dns records on this domain is full!"
         exit 1
