@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Try `install_agnudp.sh --help` for usage.
+# Try `MyUdp.sh --help` for usage.
 #
 # (c) 2023 Khaled AGN
 #
@@ -22,10 +22,10 @@ PROTOCOL="udp"
 UDP_PORT=":36712"
 
 # OBFS
-OBFS="agnudp"
+OBFS="lantinudp"
 
 # PASSWORDS
-PASSWORD="agnudp"
+PASSWORD="lantinudp"
 
 # Basename of this script
 SCRIPT_NAME="$(basename "$0")"
