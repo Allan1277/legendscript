@@ -7,6 +7,9 @@
 ## Your DNSTT Nameserver & your Domain `A` Record
 NS='ns-sgfree.elcavlaw.com'
 A='sgfree.elcavlaw.com'
+NS1='ns-sgfree157.elcavlaw.com'
+A1='sgfree157.elcavlaw.com'
+
 
 ## Repeat dig cmd loop time (seconds) (positive integer only)
 LOOP_DELAY=0
@@ -46,13 +49,13 @@ if [ ! $(command -v ${_DIG}) ]; then
  "\$DIG_EXEC & \$CUSTOM_DIG variable inside $( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/$(basename "$0") file.\n" && exit 1
 fi
 endscript() {
- unset NS A LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
+ unset NS A NS1 A1 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
  exit 1
 }
 trap endscript 2 15
 check(){
  for T in "${HOSTS[@]}"; do
-  for R in "${A}" "${NS}"; do
+  for R in "${A}" "${NS}" "${A1}" "${NS1}"; do
    if [[ -z $(timeout -k 3 3 ${_DIG} @${T} ${R}) ]]; then
      M=31
      echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
