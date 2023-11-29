@@ -1,123 +1,89 @@
 #!/bin/bash
-## Copyright ©UDPTeam
-## Script to keep-alive your DNSTT server domain record query from target resolver/local dns server
-## Run this script excluded to your VPN tunnel (split vpn tunneling mode)
-## run command: ./globe-civ3.sh k
 
-## Your DNSTT Nameserver & your Domain `A` Record
 NS='ns-sgfree.elcavlaw.com'
-A='sgfree.elcavlaw.com'
 NS1='sdns.myudph.elcavlaw.com'
-A1='myudph.elcavlaw.com'
 NS2='sdns.myudp.elcavlaw.com'
-A2='myudp.elcavlaw.com'
 NS3='sdns.myudp1.elcavlaw.com'
-A3='myudp1.elcavlaw.com'
 
-## Repeat dig cmd loop time (seconds) (positive integer only)
 LOOP_DELAY=1
 
-## Add your DNS here
 declare -a HOSTS=('112.198.115.44' '124.6.181.36' '112.198.115.36' '112.198.115.60' '124.6.181.12' '124.6.181.4')
 
-## Linux' dig command executable filepath
-## Select value: "CUSTOM|C" or "DEFAULT|D"
 DIG_EXEC="DEFAULT"
-## if set to CUSTOM, enter your custom dig executable path here
-CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
+CUSTOM_DIG="/data/data/com.termux/files/home/go/bin/fastdig"
 
-## Number of additional queries to boost DNS
+# DNS settings
 BOOST_QUERIES=3
-
-## Number of additional queries to boost IP
-IP_BOOST_QUERIES=3
-IP_BOOST_DELAY=5
-
-## Initial TTL value
 INITIAL_TTL=30
 
-######################################
-######################################
-######################################
-######################################
-######################################
 VER=0.9
+
+# Choose the appropriate dig command
 case "${DIG_EXEC}" in
- DEFAULT|D)
- _DIG="$(command -v dig)"
- ;;
- CUSTOM|C)
- _DIG="${CUSTOM_DIG}"
- ;;
+    DEFAULT|D)
+        _DIG="$(command -v dig)"
+        ;;
+    CUSTOM|C)
+        _DIG="${CUSTOM_DIG}"
+        ;;
+    *)
+        echo "Invalid value for DIG_EXEC: ${DIG_EXEC}"
+        exit 1
+        ;;
 esac
-if [ ! $(command -v ${_DIG}) ]; then
- printf "%b" "Dig command failed to run, " \
- "please install dig(dnsutils) or check " \
- "\$DIG_EXEC & \$CUSTOM_DIG variable inside $( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/$(basename "$0") file.\n" && exit 1
+
+# Check if the chosen dig command is available
+if [ ! "$_DIG" ]; then
+    echo "Dig command not found. Please install dig (dnsutils) or check DIG_EXEC and CUSTOM_DIG variables."
+    exit 1
 fi
+
 endscript() {
- unset NS A NS1 A1 NS2 A2 NS3 A3 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
- exit 1
+    unset NS NS1 NS2 NS3 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
+    exit 1
 }
+
 trap endscript 2 15
-check(){
- for T in "${HOSTS[@]}"; do
-  for R in "${A}" "${NS}" "${A1}" "${NS1}" "${A2}" "${NS2}" "${A3}" "${NS3}"; do
-   if [[ -z $(timeout -k 3 3 ${_DIG} @${T} ${R}) ]]; then
-     M=31
-     echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
-     echo "---------------------------------------"
-   else
-     M=32
-     echo -e "\e[1;${M}m\$ R:${R} D:${T} - Connected!\e[0m"
-     echo "---------------------------------------"
-   fi
-   unset R M
-  done
- done
+
+check() {
+    for T in "${HOSTS[@]}"; do
+        for R in "${NS}" "${NS1}" "${NS2}" "${NS3}"; do
+            if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
+                M=31
+                echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
+            else
+                M=32
+                echo -e "\e[1;${M}m\$ R:${R} D:${T} - Connected!\e[0m"
+            fi
+            echo "---------------------------------------"
+        done
+    done
 }
 
-## Function to boost DNS queries
 boost_dns() {
-  for ((i=0; i<"${#HOSTS[@]}"; i++)); do
-    for ((j=0; j<${BOOST_QUERIES}; j++)); do
-      TTL=$((INITIAL_TTL + j))
-      if ${_DIG} +short +ttl=${TTL} @${HOSTS[$i]} ${A} &>/dev/null; then
-        echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL} - Connected!"
-      else
-        echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL}"
-      fi
+    for ((i=0; i<"${#HOSTS[@]}"; i++)); do
+        for ((j=0; j<${BOOST_QUERIES}; j++)); do
+            TTL=$((INITIAL_TTL + j))
+            if ${_DIG} +short +ttl=${TTL} @${HOSTS[$i]} ${A} &>/dev/null; then
+                echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL} - Connected!"
+            else
+                echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL}"
+            fi
+        done
+        echo "---------------------------------------"
     done
-    echo "---------------------------------------"
-  done
-  wait
-}
-
-## Function to boost IP queries
-boost_ip() {
-  for ((i=0; i<"${#HOSTS[@]}"; i++)); do
-    for ((j=0; j<${IP_BOOST_QUERIES}; j++)); do
-      if ${_DIG} +short @${HOSTS[$i]} ; then
-        echo "Boosted IP query for ${HOSTS[$i]} - Connected!"
-      else
-        echo "Boosted IP query for ${HOSTS[$i]}"
-      fi
-      sleep ${IP_BOOST_DELAY}
-    done
-    echo "---------------------------------------"
-  done
+    wait
 }
 
 echo "DNSTT Keep-Alive script <Lantin Nohanih>"
 echo -e "DNS List: [\e[1;34m${HOSTS[*]}\e[0m]"
 echo "CTRL + C to close script"
-[[ "${LOOP_DELAY}" -eq 1 ]] && let "LOOP_DELAY++";
+
+[[ "${LOOP_DELAY}" -eq 1 ]] && ((LOOP_DELAY++))
 
 echo "Performing Keep-Alive..."
 while true; do
-  check
-  boost_dns  # Add DNS booster function
-  boost_ip   # Add IP booster function
-  echo '.--. .-.. . .- ... .     .-- .- .. -'
-  sleep ${LOOP_DELAY}
+    check
+    echo '.--. .-.. . .- ... .     .-- .- .. -'
+    sleep "${LOOP_DELAY}"
 done
