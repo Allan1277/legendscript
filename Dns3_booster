@@ -9,7 +9,7 @@ NS='ns-sgfree.elcavlaw.com'
 A='sgfree.elcavlaw.com'
 
 ## Repeat dig cmd loop time (seconds) (positive integer only)
-LOOP_DELAY=1
+LOOP_DELAY=5
 
 ## Add your DNS here
 declare -a HOSTS=('124.6.181.36' '124.6.181.12')
@@ -53,7 +53,7 @@ trap endscript 2 15
 check(){
  for T in "${HOSTS[@]}"; do
   for R in "${A}" "${NS}"; do
-   if [[ -z $(timeout -k 5 5 ${_DIG} @${T} ${R}) ]]; then
+   if [[ -z $(timeout -k 3 3 ${_DIG} @${T} ${R}) ]]; then
      M=31
      echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
      echo "---------------------------------------"
