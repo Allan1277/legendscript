@@ -9,13 +9,17 @@ NS='ns-sgfree.elcavlaw.com'
 A='sgfree.elcavlaw.com'
 NS1='sdns.myudph.elcavlaw.com'
 A1='myudph.elcavlaw.com'
+NS2='sdns.myudp.elcavlaw.com'
+A2='myudp.elcavlaw.com'
+NS3='sdns.myudp1.elcavlaw.com'
+A3='myudp1.elcavlaw.com'
 
 
 ## Repeat dig cmd loop time (seconds) (positive integer only)
 LOOP_DELAY=1
 
 ## Add your DNS here
-declare -a HOSTS=('124.6.181.12' '124.6.181.36')
+declare -a HOSTS=('124.6.181.44' '112.198.115.44' '124.6.181.36' '112.198.115.36' '124.6.181.20' '112.198.115.60' '124.6.181.12' '124.6.181.4')
 
 ## Linux' dig command executable filepath
 ## Select value: "CUSTOM|C" or "DEFAULT|D"
@@ -24,7 +28,7 @@ DIG_EXEC="DEFAULT"
 CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
 
 ## Number of additional queries to boost DNS
-BOOST_QUERIES=3
+BOOST_QUERIES=5
 
 ## Initial TTL value
 INITIAL_TTL=30
@@ -49,13 +53,13 @@ if [ ! $(command -v ${_DIG}) ]; then
  "\$DIG_EXEC & \$CUSTOM_DIG variable inside $( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/$(basename "$0") file.\n" && exit 1
 fi
 endscript() {
- unset NS A NS1 A1 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
+ unset NS A NS1 A1 NS2 A2 NS3 A3 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
  exit 1
 }
 trap endscript 2 15
 check(){
  for T in "${HOSTS[@]}"; do
-  for R in "${A}" "${NS}" "${A1}" "${NS1}"; do
+  for R in "${A}" "${NS}" "${A1}" "${NS1}" "${A2}" "${NS2}" "${A3}" "${NS3}"; do
    if [[ -z $(timeout -k 3 3 ${_DIG} @${T} ${R}) ]]; then
      M=31
      echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
