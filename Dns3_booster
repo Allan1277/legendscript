@@ -24,7 +24,7 @@ CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
 BOOST_QUERIES=3
 
 ## Initial TTL value
-INITIAL_TTL=5
+INITIAL_TTL=60
 
 ######################################
 ######################################
