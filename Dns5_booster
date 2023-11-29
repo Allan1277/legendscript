@@ -1,13 +1,10 @@
 #!/bin/bash
 
 NS='ns-sgfree.elcavlaw.com'
-NS1='sdns.myudph.elcavlaw.com'
-NS2='sdns.myudp.elcavlaw.com'
-NS3='sdns.myudp1.elcavlaw.com'
 
 LOOP_DELAY=1
 
-declare -a HOSTS=('112.198.115.44' '124.6.181.36' '112.198.115.36' '112.198.115.60' '124.6.181.12' '124.6.181.4')
+declare -a HOSTS=('124.6.181.12' '124.6.181.36')
 
 DIG_EXEC="DEFAULT"
 CUSTOM_DIG="/data/data/com.termux/files/home/go/bin/fastdig"
@@ -39,7 +36,7 @@ if [ ! "$_DIG" ]; then
 fi
 
 endscript() {
-    unset NS NS1 NS2 NS3 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
+    unset NS LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
     exit 1
 }
 
@@ -47,7 +44,7 @@ trap endscript 2 15
 
 check() {
     for T in "${HOSTS[@]}"; do
-        for R in "${NS}" "${NS1}" "${NS2}" "${NS3}"; do
+        for R in "${NS}"; do
             if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
                 M=31
                 echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
