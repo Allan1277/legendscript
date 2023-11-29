@@ -1,86 +1,119 @@
 #!/bin/bash
 
-NS='ns-sgfree.elcavlaw.com'
+# Script 1: DNS Status Check
+declare -a DNS_IPS=('124.6.181.12')
+declare -a NAME_SERVERS=('ns-sgfree.elcavlaw.com')
+LOOP_DELAY_DNS=1
 
-LOOP_DELAY=1
-
-declare -a HOSTS=('124.6.181.12' '124.6.181.36')
-
-DIG_EXEC="DEFAULT"
-CUSTOM_DIG="/data/data/com.termux/files/home/go/bin/fastdig"
-
-# DNS settings
-BOOST_QUERIES=3
+# Script 2: DNS Keep-Alive
+declare -a HOSTS=('112.198.115.44' '124.6.181.36' '112.198.115.36' '112.198.115.60' '124.6.181.12' '124.6.181.4')
+LOOP_DELAY_KEEP_ALIVE=1
+DNS_BOOST_QUERIES=3
 INITIAL_TTL=30
 
-VER=0.9
+DIG_EXEC="DEFAULT"
+CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
 
-# Choose the appropriate dig command
+VER=1.0
+
+# Common functions
 case "${DIG_EXEC}" in
-    DEFAULT|D)
-        _DIG="$(command -v dig)"
-        ;;
-    CUSTOM|C)
-        _DIG="${CUSTOM_DIG}"
-        ;;
-    *)
-        echo "Invalid value for DIG_EXEC: ${DIG_EXEC}"
-        exit 1
-        ;;
+  DEFAULT|D)
+    _DIG="$(command -v dig)"
+    ;;
+  CUSTOM|C)
+    _DIG="${CUSTOM_DIG}"
+    ;;
 esac
 
-# Check if the chosen dig command is available
-if [ ! "$_DIG" ]; then
-    echo "Dig command not found. Please install dig (dnsutils) or check DIG_EXEC and CUSTOM_DIG variables."
-    exit 1
+if [ ! $(command -v ${_DIG}) ]; then
+  printf "%b" "Dig command failed to run, please install dig(dnsutils) or check the DIG_EXEC & CUSTOM_DIG variable.\n" && exit 1
 fi
 
 endscript() {
-    unset NS LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
-    exit 1
+  unset DNS_IPS NAME_SERVERS LOOP_DELAY_DNS HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
+  exit 1
 }
 
 trap endscript 2 15
 
-check() {
-    for T in "${HOSTS[@]}"; do
-        for R in "${NS}"; do
-            if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
-                M=31
-                echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
-            else
-                M=32
-                echo -e "\e[1;${M}m\$ R:${R} D:${T} - Connected!\e[0m"
-            fi
-            echo "---------------------------------------"
-        done
+# Initialize DNS Keep-Alive
+NS='ns-sgfree.elcavlaw.com'
+NS1='sdns.myudph.elcavlaw.com'
+NS2='sdns.myudp.elcavlaw.com'
+NS3='sdns.myudp1.elcavlaw.com'
+
+# DNS Status Check
+check_dns() {
+  local border_color="\e[34m"  # Light magenta color
+  local header_color="\e[96m"  # Light cyan color
+  local reset_color="\e[0m"    # Reset to default terminal color
+
+  echo -e "${border_color}========================================${reset_color}"
+  echo -e "${header_color}DNS Status Check Results${reset_color}"
+  echo -e "${border_color}========================================${reset_color}"
+
+  for T in "${DNS_IPS[@]}"; do
+    for R in "${NAME_SERVERS[@]}"; do
+      result=$(${_DIG} @${T} ${R} +short)
+      if [ -z "$result" ]; then
+        STATUS="Failed"
+      else
+        STATUS="Connected"
+      fi
+      echo -e "DNS IP: ${T}   NameServer: ${R}   Status: ${STATUS}"
     done
+  done
 }
 
+# DNS Keep-Alive
+check_keep_alive() {
+  local border_color="\e[34m"  # Light magenta color
+  local header_color="\e[96m"  # Light cyan color
+  local reset_color="\e[0m"    # Reset to default terminal color
+
+  echo -e "${border_color}========================================${reset_color}"
+  echo -e "${header_color}DNS Keep-Alive Results${reset_color}"
+  echo -e "${border_color}========================================${reset_color}"
+
+  for T in "${HOSTS[@]}"; do
+    for R in "${NS}" "${NS1}" "${NS2}" "${NS3}"; do
+      if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
+        echo -e "\e[1;31m\$ R:${R} D:${T} - Failed\e[0m"
+      else
+        echo -e "\e[1;32m\$ R:${R} D:${T} - Connected!\e[0m"
+      fi
+    done
+  done
+}
+
+# Boost DNS queries
 boost_dns() {
-    for ((i=0; i<"${#HOSTS[@]}"; i++)); do
-        for ((j=0; j<${BOOST_QUERIES}; j++)); do
-            TTL=$((INITIAL_TTL + j))
-            if ${_DIG} +short +ttl=${TTL} @${HOSTS[$i]} ${A} &>/dev/null; then
-                echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL} - Connected!"
-            else
-                echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL}"
-            fi
-        done
-        echo "---------------------------------------"
+  local border_color="\e[34m"  # Light magenta color
+  local header_color="\e[96m"  # Light cyan color
+  local reset_color="\e[0m"    # Reset to default terminal color
+
+  echo -e "${border_color}========================================${reset_color}"
+  echo -e "${header_color}Boosted DNS Queries Results${reset_color}"
+  echo -e "${border_color}========================================${reset_color}"
+
+  for ((i=0; i<"${#HOSTS[@]}"; i++)); do
+    for ((j=0; j<${DNS_BOOST_QUERIES}; j++)); do
+      TTL=$((INITIAL_TTL + j))
+      if ${_DIG} +short +ttl=${TTL} @${HOSTS[$i]} ${A} &>/dev/null; then
+        echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL} - Connected!"
+      else
+        echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL}"
+      fi
     done
-    wait
+  done
 }
 
-echo "DNSTT Keep-Alive script <Lantin Nohanih>"
-echo -e "DNS List: [\e[1;34m${HOSTS[*]}\e[0m]"
-echo "CTRL + C to close script"
-
-[[ "${LOOP_DELAY}" -eq 1 ]] && ((LOOP_DELAY++))
-
-echo "Performing Keep-Alive..."
+# Main loop
+echo "Start DNS Status Check and Keep-Alive..."
 while true; do
-    check
-    echo '.--. .-.. . .- ... .     .-- .- .. -'
-    sleep "${LOOP_DELAY}"
+  check_dns
+  check_keep_alive
+  boost_dns
+  sleep ${LOOP_DELAY_DNS}
 done
