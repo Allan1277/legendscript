@@ -1,22 +1,38 @@
 #!/bin/bash
 
-# Script 1: DNS Status Check
-declare -a DNS_IPS=('124.6.181.12')
-declare -a NAME_SERVERS=('ns-sgfree.elcavlaw.com')
-LOOP_DELAY_DNS=1
+clear
 
-# Script 2: DNS Keep-Alive
-declare -a HOSTS=('112.198.115.44' '124.6.181.36' '112.198.115.36' '112.198.115.60' '124.6.181.12' '124.6.181.4')
-LOOP_DELAY_KEEP_ALIVE=1
-DNS_BOOST_QUERIES=3
-INITIAL_TTL=30
+function endscript() {
+  exit 1
+}
+
+trap endscript 2 15
+
+echo -e "\e[1;37mEnter DNS IPs separated by ' ': \e[0m"
+read -a DNS_IPS
+
+echo -e "\e[1;37mEnter Your NameServers separated by ' ': \e[0m"
+read -a NAME_SERVERS
+
+LOOP_DELAY=5
+echo -e "\e[1;37mCurrent loop delay is \e[1;33m${LOOP_DELAY}\e[1;37m seconds.\e[0m"
+echo -e "\e[1;37mWould you like to change the loop delay? \e[1;36m[y/n]:\e[0m "
+read -r change_delay
+
+if [[ "$change_delay" == "y" ]]; then
+  echo -e "\e[1;37mEnter custom loop delay in seconds \e[1;33m(5-15):\e[0m "
+  read -r custom_delay
+  if [[ "$custom_delay" =~ ^[5-9]$|^1[0-5]$ ]]; then
+    LOOP_DELAY=$custom_delay
+  else
+    echo -e "\e[1;31mInvalid input. Using default loop delay of ${LOOP_DELAY} seconds.\e[0m"
+  fi
+fi
 
 DIG_EXEC="DEFAULT"
 CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
+VER=0.3
 
-VER=1.0
-
-# Common functions
 case "${DIG_EXEC}" in
   DEFAULT|D)
     _DIG="$(command -v dig)"
@@ -30,90 +46,109 @@ if [ ! $(command -v ${_DIG}) ]; then
   printf "%b" "Dig command failed to run, please install dig(dnsutils) or check the DIG_EXEC & CUSTOM_DIG variable.\n" && exit 1
 fi
 
-endscript() {
-  unset DNS_IPS NAME_SERVERS LOOP_DELAY_DNS HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
-  exit 1
-}
+# Initialize the counter
+count=1
 
-trap endscript 2 15
-
-# Initialize DNS Keep-Alive
-NS='ns-sgfree.elcavlaw.com'
-NS1='sdns.myudph.elcavlaw.com'
-NS2='sdns.myudp.elcavlaw.com'
-NS3='sdns.myudp1.elcavlaw.com'
-
-# DNS Status Check
-check_dns() {
-  local border_color="\e[34m"  # Light magenta color
+check(){
+  local border_color="\e[95m"  # Light magenta color
+  local success_color="\e[92m"  # Light green color
+  local fail_color="\e[91m"    # Light red color
   local header_color="\e[96m"  # Light cyan color
   local reset_color="\e[0m"    # Reset to default terminal color
+  local padding="  "            # Padding for aesthetic
 
-  echo -e "${border_color}========================================${reset_color}"
-  echo -e "${header_color}DNS Status Check Results${reset_color}"
-  echo -e "${border_color}========================================${reset_color}"
-
+  # Header
+  echo -e "${border_color}┌────────────────────────────────────────────────┐${reset_color}"
+  echo -e "${border_color}│${header_color}${padding}DNS Status Check Results${padding}${reset_color}"
+  echo -e "${border_color}├────────────────────────────────────────────────┤${reset_color}"
+  
+  # Results
   for T in "${DNS_IPS[@]}"; do
     for R in "${NAME_SERVERS[@]}"; do
       result=$(${_DIG} @${T} ${R} +short)
       if [ -z "$result" ]; then
-        STATUS="Failed"
+        STATUS="${fail_color}Failed${reset_color}"
       else
-        STATUS="Connected"
+        STATUS="${success_color}Success${reset_color}"
       fi
-      echo -e "DNS IP: ${T}   NameServer: ${R}   Status: ${STATUS}"
+      echo -e "${border_color}│${padding}${reset_color}DNS IP: ${T}${reset_color}"
+      echo -e "${border_color}│${padding}NameServer: ${R}${reset_color}"
+      echo -e "${border_color}│${padding}Status: ${STATUS}${reset_color}"
     done
   done
+
+  # Check count and Loop Delay
+  echo -e "${border_color}├────────────────────────────────────────────────┤${reset_color}"
+  echo -e "${border_color}│${padding}${header_color}Check count: ${count}${padding}${reset_color}"
+  echo -e "${border_color}│${padding}Loop Delay: ${LOOP_DELAY} seconds${padding}${reset_color}"
+  
+  # Footer
+  echo -e "${border_color}└────────────────────────────────────────────────┘${reset_color}"
 }
 
-# DNS Keep-Alive
-check_keep_alive() {
-  local border_color="\e[34m"  # Light magenta color
-  local header_color="\e[96m"  # Light cyan color
-  local reset_color="\e[0m"    # Reset to default terminal color
-
-  echo -e "${border_color}========================================${reset_color}"
-  echo -e "${header_color}DNS Keep-Alive Results${reset_color}"
-  echo -e "${border_color}========================================${reset_color}"
-
-  for T in "${HOSTS[@]}"; do
-    for R in "${NS}" "${NS1}" "${NS2}" "${NS3}"; do
-      if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
-        echo -e "\e[1;31m\$ R:${R} D:${T} - Failed\e[0m"
-      else
-        echo -e "\e[1;32m\$ R:${R} D:${T} - Connected!\e[0m"
-      fi
+countdown() {
+    for i in 2 1 0; do
+        echo "Checking started in $i seconds..."
+        sleep 1
     done
-  done
 }
 
-# Boost DNS queries
-boost_dns() {
-  local border_color="\e[34m"  # Light magenta color
-  local header_color="\e[96m"  # Light cyan color
-  local reset_color="\e[0m"    # Reset to default terminal color
-
-  echo -e "${border_color}========================================${reset_color}"
-  echo -e "${header_color}Boosted DNS Queries Results${reset_color}"
-  echo -e "${border_color}========================================${reset_color}"
-
-  for ((i=0; i<"${#HOSTS[@]}"; i++)); do
-    for ((j=0; j<${DNS_BOOST_QUERIES}; j++)); do
-      TTL=$((INITIAL_TTL + j))
-      if ${_DIG} +short +ttl=${TTL} @${HOSTS[$i]} ${A} &>/dev/null; then
-        echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL} - Connected!"
-      else
-        echo "Boosted DNS query for ${HOSTS[$i]} - TTL: ${TTL}"
-      fi
-    done
-  done
-}
+echo "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⡶⠛⠛⠉⠉⣉⣛⡲⢤⡀⢸⢧⡀⠀⣠⣾⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⡾⠋⠁⢀⣠⠶⠒⢉⡩⠍⠉⣳⣿⣿⣟⣷⣾⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⡿⠋⠀⣀⡔⠋⠀⣠⠞⠉⠀⣠⠖⠋⢩⡟⢻⣿⠻⣝⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣾⠏⠀⠀⡴⠋⠀⣠⠞⠁⠀⢀⡞⠁⠀⠀⣼⡇⠘⡏⢧⢻⠈⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⠃⠀⢀⡾⠁⢠⠞⠁⣠⠂⣴⠏⠀⡀⠀⢀⣿⡇⠀⡇⠘⣾⢳⣼⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠇⠀⣴⣿⠁⡴⠃⢀⡞⣡⡿⡏⠀⡼⠁⠀⣿⡿⠁⠀⡇⠀⣿⡈⢿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⡾⡏⠀⣸⣽⣏⡾⠁⣰⣯⡟⠉⢹⠃⣸⠃⠀⣾⣽⡇⠀⠀⡇⠀⢸⡇⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢀⠄⢹⠁⢸⠃⢸⡟⠀⣼⣿⣷⣦⣄⣿⣸⠇⠀⣸⣿⠋⣿⡀⠀⡇⠀⣿⣷⠈⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢀⡌⠀⢸⠀⡏⠀⡾⠃⣴⠋⠸⣿⣿⠟⣿⠏⢀⣷⡿⠃⠀⠸⣇⢠⡇⢰⣇⢿⣇⢸⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠈⠈⠀⢸⢰⠇⣷⠇⣰⡏⠀⠀⠀⠀⠀⡿⣠⠟⡿⢃⣤⣤⣤⣿⢸⢁⣿⢿⡈⢿⣯⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⣀⣀⣀⣀⡸⢾⢀⡟⢰⣿⡇⠀⠀⠀⠀⠀⠟⠁⠀⠁⠘⠿⠿⢛⣿⠇⣸⡇⢸⣷⣘⣿⣿⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣾⣼⡇⣾⣿⣿⡀⠀⠀⠀⠀⠀⣀⣠⣤⣤⣤⣴⣿⣿⣾⣿⣿⣿⣿⣿⣿⣿⣝⣦⡀⠀⠀⠀⠀⠀⠀⠀
+⠀⢀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⡙⣧⣀⣀⣀⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣎⢿⣦⣄⠀⠀⠀⠀⠀
+⢠⣾⣿⣿⣿⣿⣿⠿⠋⠉⠉⠁⠀⠀⠈⠉⠉⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣻⡟⠀⠀⠀⠀⠀
+⢸⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡷⡇⠀⠀⠀⠀⠀
+⢸⣿⣿⣿⣿⣿⣷⡄⠀⠀⠀⣠⡴⠆⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠁⠀⠘⣆⠀⠀⠀⠀
+⢸⣿⣿⣿⣿⣿⣿⣷⣀⣦⣶⣿⣿⣶⣦⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠁⠀⠀⠀⠆⠹⣆⠀⠀⠀
+⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣀⣀⣀⠢⠀⢸⣾⡀⢻⠀⠀⠀
+⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠙⠓⠶⣬⣫⣧⠈⡇⠀⠀
+⠀⢻⣿⣿⢳⣿⣿⣿⣿⣯⣷⣿⡿⠿⠛⠛⠛⠛⠛⠛⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠈⢻⢤⡟⠀⠀
+⠀⢸⣿⣿⣿⣿⣿⣿⣿⠟⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⡄⠉⠉⠉⠉⠉⠛⠻⢿⣿⣿⣿⣿⣇⡉⠳⠲⣶⠶⢾⣾⡇⠀⠀
+⠀⠸⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢧⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣆⠀⠈⢡⣴⡟⠃⠀⠀
+⠀⠀⢹⣿⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⡿⠟⣿⡇⠀⠀⠀
+⠀⠀⢺⣿⣿⡇⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⣸⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⠟⠋⠀⢀⣽⡇⠀⠀⠀
+⠀⠀⢿⣿⣿⣷⡀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⢐⣼⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⠟⠁⠀⠀⣠⢸⠁⡇⠀⠀⠀
+⠀⠀⠘⣿⣿⣿⣇⠀⠀⠀⠙⠲⠄⣀⣀⡀⠀⠀⠀⠀⢀⣵⠟⡟⠷⣄⠀⠀⠀⠀⠀⠀⠀⢀⣼⡟⠁⣶⠀⣴⣾⣏⡏⠀⡇⠀⠀⠀
+⠀⠀⠀⠈⢿⣿⣿⣆⣄⠀⠀⠀⠀⠀⠉⠉⠀⠀⠀⢠⡿⠁⢠⡇⠀⠈⠳⣤⣤⣤⣠⣤⡴⣟⣽⠇⣸⢫⠾⣯⢟⡞⠀⢰⠃⠀⠀⠀
+⠀⠀⠀⠀⠀⠙⢿⣿⣆⣀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠏⠀⠀⢸⠃⠀⠀⠀⠀⢀⣿⣿⣏⣼⣿⡿⢰⣿⠏⣼⣿⡿⠁⠀⣸⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠙⠿⣿⠀⠀⠀⠀⠀⠀⢀⡼⠃⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⡿⠃⣿⠇⣸⠃⢸⣿⣾⠀⠀⠀⡿⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⠀⠀⠀⠀⠀⠀⠘⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠟⠁⠀⣿⣴⠇⢀⣿⢿⠇⠀⠀⢸⠇⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⡏⠀⠀⠀⢸⠏⠀⢸⡿⢸⡀⠀⠀⢸⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢣⡀⠀⠀⢸⠀⠀⢸⡇⠀⠷⠀⠀⢸⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣰⠃⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡄⠀⠀⠀⠀⠀⠀⠀⢱⡀⠀⠸⣇⠀⠸⠇⠀⠀⠀⠀⢸⡆⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢠⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠻⡄⠀⠹⡆⠀⠀⠀⠀⠀⠀⠀⠛⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢀⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠻⡄⠀⠙⢦⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⢸⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⢿⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠃⠀⠀⠀⠈⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⢰⡇⠀⠀⠀⠀⠀⠀⠀⠀⠈⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠀⠀⠀⠀⠀⠹⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⢀⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⣼⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢀⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣇⠀⠀⠀⠀⠀⠀⠀⠀⡄⠀⠀⠀⠀⠀⠀⠀⠀⢻⠷⣦⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⣾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣦⠀⠀⠀⠀⠀⠀⣰⠃⠀⠀⠀⠀⠀⠀⠀⢠⡿⠀⣿⣤⡀⠀⠀⠀⠀⠀⠀
+⠀⠀⣶⣏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢶⡀⠀⠀⠀⢀⡏⠀⠀⠀⠀⠀⠀⠀⣴⡿⠁⢠⠛⣆⡃⠀⠀⠀⠀⠀⠀
+⠀⣸⣇⠉⠓⠦⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣧⡀⠀⢠⠟⠀⠀⠀⠀⠀⠀⣠⠞⣻⢃⡴⠋⠀⠘⢇⢠⡀⠀⠀⠀⠀
+⣰⠇⠈⠑⣶⡤⣀⡉⠙⠒⠶⠤⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠈⢷⣲⠏⠀⠀⠀⠀⠀⢠⡾⠁⢰⡿⢻⡀⠀⠀⠀⠘⣇⠙⢦⠀⠀⠀
+⠇⠀⠀⢠⡟⠀⠈⠉⠛⣶⠤⢤⣄⡈⠉⠛⠒⠤⣤⣄⣀⠀⠀⠸⡏⠀⠀⠀⠀⠀⢠⡟⠁⠀⡿⠀⠈⠻⡄⠀⠀⠀⠘⣧⠀⠳⡄⠀
+⠀⠀⠀⠟⠀⠀⠀⠀⠀⡇⠀⠀⠀⠈⠉⠳⠦⢤⣀⡀⠈⠛⢿⢀⣻⡀⠀⠀⠀⠠⢾⠤⠤⠀⡇⠀⠀⠀⠙⢦⠀⠀⠀⠈⠷⡄⠘⠆"
+echo""
+countdown
+  clear
 
 # Main loop
-echo "Start DNS Status Check and Keep-Alive..."
 while true; do
-  check_dns
-  check_keep_alive
-  boost_dns
-  sleep ${LOOP_DELAY_DNS}
+  check
+  ((count++))  # Increment the counter
+  sleep $LOOP_DELAY
 done
+
+exit 0
