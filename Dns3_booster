@@ -5,10 +5,10 @@
 ## run command: ./globe-civ3.sh k
 
 ## Your DNSTT Nameserver & your Domain `A` Record
-NS='ns-sgfree.elcavlaw.com'
-A='sgfree.elcavlaw.com'
-NS1='ns-sgfree157.elcavlaw.com'
-A1='sgfree157.elcavlaw.com'
+NS='sdns.myudp.elcavlaw.com'
+A='myudp.elcavlaw.com'
+NS1='sdns.myudph.elcavlaw.com'
+A1='myudph.elcavlaw.com'
 
 
 ## Repeat dig cmd loop time (seconds) (positive integer only)
