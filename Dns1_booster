@@ -7,12 +7,11 @@
 ## Your DNSTT Nameserver & your Domain `A` Record
 NS='sdns.myudp.elcavlaw.com'
 A='myudp.elcavlaw.com'
-
 ## Repeat dig cmd loop time (seconds) (positive interger only)
-LOOP_DELAY=1
+LOOP_DELAY=5
 
 ## Add your DNS here
-declare -a HOSTS=(''124.6.181.12')
+declare -a HOSTS=('124.6.181.12')
 
 ## Linux' dig command executable filepath
 ## Select value: "CUSTOM|C" or "DEFAULT|D"
@@ -54,7 +53,7 @@ check(){
   done
  done
 }
-echo "DNSTT Keep-Alive script <Lantin Nohanih>"
+echo "DNSTT Keep-Alive script <Dexter Eskalarte>"
 echo -e "DNS List: [\e[1;34m${HOSTS[*]}\e[0m]"
 echo "CTRL + C to close script"
 [[ "${LOOP_DELAY}" -eq 1 ]] && let "LOOP_DELAY++";
