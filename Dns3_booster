@@ -1,7 +1,7 @@
 #!/bin/bash
 
-NS='sdns.myudp.elcavlaw.com'
-A='myudp.elcavlaw.com'
+NS='ns.jerald.acerodns.xyz'
+A='jerald.acerodns.xyz'
 
 LOOP_DELAY=1
 
