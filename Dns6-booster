@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Color variables
+border_color="\e[95m"
+success_color="\e[92m"
+fail_color="\e[91m"
+header_color="\e[96m"
+reset_color="\e[0m"
+padding="  "
+
+# Function to display header
+display_header() {
+  echo -e "${border_color}↓✴✴✴...↓${reset_color}"
+  echo -e "${border_color}│${header_color}${padding}DNS Status Check Results${padding}${reset_color}"
+  echo -e "${border_color}↕✰✰✰...↕${reset_color}"
+}
+
+# Function to display results
+display_result() {
+  # ... (your result display code here)
+}
+
+# Function to display footer
+display_footer() {
+  # ... (your footer display code here)
+}
+
+# Arrays for DNS IPs and NameServers
+DNS_IPS=("124.6.181.4" "124.6.181.12")
+NAME_SERVERS=("sdns.myudp.elcavlaw.com" "sdns.myudph.elcavlaw.com")
+
+# Rest of your script (modify as needed)
+
+# Main loop
+while true; do
+  display_header
+
+  for T in "${DNS_IPS[@]}"; do
+    for R in "${NAME_SERVERS[@]}"; do
+      result=$(${_DIG} "@${T}" "${R}" +short)
+      STATUS="${result:+${fail_color}Failed${reset_color}}${result:-${success_color}Success${reset_color}}"
+
+      echo -e "${border_color}↕${padding}${reset_color}DNS IP: ${T}${padding}${reset_color}"
+      echo -e "${border_color}↕${padding}NameServer: ${R}${padding}${reset_color}"
+      echo -e "${border_color}↕${padding}Status: ${STATUS}${padding}${reset_color}"
+    done
+  done
+
+  display_footer
+
+  ((count++))  # Increment the counter
+  sleep $LOOP_DELAY
+done
+
+exit 0
