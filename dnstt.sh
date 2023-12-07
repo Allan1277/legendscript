@@ -26,8 +26,8 @@ fi
 
 # Configure server and key
 if [ ! -e $HOME/credenciais ]; then
-    read -p "$(echo -e "${GREEN}Enter SlowDNS server (e.g., example.com): ${SCOLOR}")" sdns.myudp.elcavlaw.com sdns.myudp1.elcavlaw.com sdns.myudph.elcavlaw.com
-    read -p "$(echo -e "${GREEN}Enter your SlowDNS key: ${SCOLOR}")" 7d631e6ca0f7c6df2b3f2b4dc413fbb8c9ecd05245ccb529787ea131478e6a65
+    read -p "$(echo -e "${GREEN}Enter SlowDNS server (e.g., example.com): ${SCOLOR}")" ns
+    read -p "$(echo -e "${GREEN}Enter your SlowDNS key: ${SCOLOR}")" chave
     echo -e "$ns\n$chave" > $HOME/credenciais
 fi
 
@@ -36,8 +36,7 @@ echo -ne "\n${RED}[${YELLOW}!${RED}] ${YELLOW}To continue, make sure mobile data
 read
 
 # Replace ISP DNS
-read -p "$(echo -e "${GREEN}Replace your ISP DNS (e.g., 8.8.8.8): ${SCOLOR}")" -e -i 124.6.181.4 124.6.181.12 124.6.181.36 112.198.115.44 112.198.115.36 112.198.115.60 
- ra
+read -p "$(echo -e "${GREEN}Replace your ISP DNS (e.g., 8.8.8.8): ${SCOLOR}")" -e -i 8.8.8.8 ra
 
 # Run SlowDNS
 $HOME/dns -udp $ra:53 -pubkey $(sed -n 2p $HOME/credenciais) $(sed -n 1p $HOME/credenciais) 127.0.0.1:2222 > /dev/null 2>&1 &
