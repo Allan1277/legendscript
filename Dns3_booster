@@ -2,14 +2,14 @@
 
 NS='sdns.myudp.elcavlaw.com'
 A='myudp.elcavlaw.com'
-NS='sdns.myudp1.elcavlaw.com'
-A='myudp1.elcavlaw.com'
-NS='sdns.myudph.elcavlaw.com'
-A='myudph.elcavlaw.com'
+NS1='sdns.myudp1.elcavlaw.com'
+A1='myudp1.elcavlaw.com'
+NS2='sdns.myudph.elcavlaw.com'
+A2='myudph.elcavlaw.com'
 
 LOOP_DELAY=1
 
-declare -a HOSTS=('124.6.181.12' '124.6.181.4')
+declare -a HOSTS=('gtm.palaboy.tech')
 
 DIG_EXEC="DEFAULT"
 CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
@@ -34,13 +34,13 @@ if [ ! $(command -v ${_DIG}) ]; then
  "\$DIG_EXEC & \$CUSTOM_DIG variable inside $( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/$(basename "$0") file.\n" && exit 1
 fi
 endscript() {
- unset NS A LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
+ unset NS A NS1 A1 NS2 A2 LOOP_DELAY HOSTS _DIG DIG_EXEC CUSTOM_DIG T R M TTL
  exit 1
 }
 trap endscript 2 15
 check(){
  for T in "${HOSTS[@]}"; do
-  for R in "${NS}" "${A}"; do
+  for R in "${NS}" "${A}" "${NS1}" "${A1}" "${NS2}" "${A2}"; do
    if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
      M=31
      echo -e "\e[1;${M}m\$ R:${R} D:${T}\e[0m"
