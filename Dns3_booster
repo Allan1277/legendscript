@@ -9,7 +9,7 @@ A2='myudph.elcavlaw.com'
 
 LOOP_DELAY=1
 
-declare -a HOSTS=('gtm.palaboy.tech')
+declare -a HOSTS=('gtm.elcavlaw.com')
 
 DIG_EXEC="DEFAULT"
 CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
