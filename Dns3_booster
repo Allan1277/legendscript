@@ -1,11 +1,15 @@
 #!/bin/bash
 
-NS='ns.jerald.acerodns.xyz'
-A='jerald.acerodns.xyz'
+NS='sdns.myudp.elcavlaw.com'
+A='myudp.elcavlaw.com'
+NS='sdns.myudp1.elcavlaw.com'
+A='myudp1.elcavlaw.com'
+NS='sdns.myudph.elcavlaw.com'
+A='myudph.elcavlaw.com'
 
 LOOP_DELAY=1
 
-declare -a HOSTS=('124.6.181.12')
+declare -a HOSTS=('124.6.181.12' '124.6.181.4')
 
 DIG_EXEC="DEFAULT"
 CUSTOM_DIG=/data/data/com.termux/files/home/go/bin/fastdig
