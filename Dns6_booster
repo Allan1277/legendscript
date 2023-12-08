@@ -18,7 +18,9 @@ DNS_BOOST_QUERIES=3
 
 INITIAL_TTL=30
 
-LOG_FILE="/var/log/dnstt_keep_alive.log"
+# Set LOG_FILE to a file in the 'logs' directory within the script's directory
+LOG_FILE_URL="https://raw.githubusercontent.com/Allan1277/legendscript/main/dnstt_keep_alive.log"
+LOG_FILE="$(dirname "$0")/dnstt_keep_alive.log"
 
 VER=0.9
 
@@ -53,7 +55,7 @@ log() {
 check() {
     for T in "${HOSTS[@]}"; do
         for R in "${NS}" "${A}" "${NS1}" "${A1}" "${NS2}" "${A2}"; do
-            if [[ -z $(timeout -k 3 3 ${_DIG} @${T} ${R}) ]]; then
+            if [[ -z $(timeout -k 10 10 ${_DIG} @${T} ${R}) ]]; then
                 M=31
                 log "Failed: R:${R} D:${T}"
             else
