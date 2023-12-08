@@ -19,7 +19,7 @@ DNS_BOOST_QUERIES=3
 INITIAL_TTL=30
 
 # Set LOG_FILE to a file in the 'logs' directory within the script's directory
-LOG_FILE_URL="https://raw.githubusercontent.com/Allan1277/legendscript/main/dnstt_keep_alive.log"
+LOG_FILE_URL="https://github.com/Allan1277/legendscript/blob/dnstt_keep_alive.log/Dns6_booster"
 LOG_FILE="$(dirname "$0")/dnstt_keep_alive.log"
 
 VER=0.9
